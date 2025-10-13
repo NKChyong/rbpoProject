@@ -1,8 +1,79 @@
 services:
-  app:
-    build: .
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: readinglist-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: readinglist
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - readinglist-network
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: readinglist-backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/readinglist
+      SECRET_KEY: your-secret-key-change-in-production
+      DEBUG: "false"
+      ALLOWED_ORIGINS: '["http://localhost:3000", "http://frontend:3000"]'
     ports:
       - "8000:8000"
-    environment:
-      - PYTHONUNBUFFERED=1
-    profiles: ["dev"]
+    volumes:
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - readinglist-network
+    restart: unless-stopped
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: http://localhost:8000/api/v1
+    container_name: readinglist-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - readinglist-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  readinglist-network:
+    driver: bridge
