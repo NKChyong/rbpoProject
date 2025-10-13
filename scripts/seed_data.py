@@ -44,9 +44,7 @@ async def seed_database() -> None:
             # Check if user exists
             from sqlalchemy import select
 
-            result = await db.execute(
-                select(User).where(User.username == user_data["username"])
-            )
+            result = await db.execute(select(User).where(User.username == user_data["username"]))
             existing_user = result.scalar_one_or_none()
 
             if existing_user:

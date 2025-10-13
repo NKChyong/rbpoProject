@@ -30,7 +30,7 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run ruff
-        run: ruff check --output-format=github app tests
+        run: ruff check app tests
 
       - name: Run black
         run: black --check app tests

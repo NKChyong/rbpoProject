@@ -24,11 +24,7 @@ class EntryService:
         """Create a new entry."""
         entry = Entry(
             title=entry_data.title,
-            kind=(
-                entry_data.kind.value
-                if hasattr(entry_data.kind, "value")
-                else entry_data.kind
-            ),
+            kind=(entry_data.kind.value if hasattr(entry_data.kind, "value") else entry_data.kind),
             link=str(entry_data.link) if entry_data.link else None,
             status=(
                 entry_data.status.value
@@ -100,9 +96,7 @@ class EntryService:
 
         return entries, total
 
-    async def update_entry(
-        self, entry_id: int, entry_data: EntryUpdate, user: User
-    ) -> Entry:
+    async def update_entry(self, entry_id: int, entry_data: EntryUpdate, user: User) -> Entry:
         """Update an entry."""
         entry = await self.get_entry(entry_id, user)
 

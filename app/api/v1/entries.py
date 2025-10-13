@@ -73,9 +73,7 @@ async def list_entries(
         )
 
     entry_service = EntryService(db)
-    entries, total = await entry_service.list_entries(
-        current_user, status, limit, offset
-    )
+    entries, total = await entry_service.list_entries(current_user, status, limit, offset)
 
     return EntryListResponse(
         items=[EntryResponse.model_validate(entry) for entry in entries],

@@ -48,9 +48,7 @@ async def create_admin_user(email: str, username: str, password: str) -> None:
 if __name__ == "__main__":
     if len(sys.argv) < 4:
         print("Usage: python scripts/create_admin.py <email> <username> <password>")
-        print(
-            "Example: python scripts/create_admin.py admin@example.com admin adminpass123"
-        )
+        print("Example: python scripts/create_admin.py admin@example.com admin adminpass123")
         sys.exit(1)
 
     email = sys.argv[1]

@@ -68,14 +68,10 @@ async def test_validation_error_title_too_long(client: AsyncClient, test_user: d
 
 
 @pytest.mark.asyncio
-async def test_validation_error_invalid_status_filter(
-    client: AsyncClient, test_user: dict
-):
+async def test_validation_error_invalid_status_filter(client: AsyncClient, test_user: dict):
     """Test validation error for invalid status filter."""
     headers = {"Authorization": f"Bearer {test_user['access_token']}"}
-    response = await client.get(
-        "/api/v1/entries?status=invalid_status", headers=headers
-    )
+    response = await client.get("/api/v1/entries?status=invalid_status", headers=headers)
     assert response.status_code == 400
 
 

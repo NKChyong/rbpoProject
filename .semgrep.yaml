@@ -1,2 +1,86 @@
-# Baseline Semgrep config (extend in P10)
-rules: []
+rules:
+  # Python Security Rules
+  - id: python-sql-injection
+    patterns:
+      - pattern: |
+          ... .execute("..." + ...)
+      - pattern-not: |
+          ... .execute("...", ...)
+    message: Possible SQL injection vulnerability. Use parameterized queries.
+    languages: [python]
+    severity: ERROR
+
+  - id: python-hardcoded-password
+    patterns:
+      - pattern-either:
+          - pattern: PASSWORD = "..."
+          - pattern: password = "..."
+          - pattern: SECRET = "..."
+          - pattern: secret = "..."
+          - pattern: API_KEY = "..."
+          - pattern: api_key = "..."
+    message: Hardcoded password or secret found. Use environment variables.
+    languages: [python]
+    severity: ERROR
+    paths:
+      exclude:
+        - tests/
+        - "**/test_*.py"
+
+  - id: python-eval-usage
+    pattern: eval(...)
+    message: Use of 'eval()' is dangerous and should be avoided.
+    languages: [python]
+    severity: WARNING
+
+  - id: python-exec-usage
+    pattern: exec(...)
+    message: Use of 'exec()' is dangerous and should be avoided.
+    languages: [python]
+    severity: WARNING
+
+  - id: python-pickle-usage
+    patterns:
+      - pattern-either:
+          - pattern: pickle.load(...)
+          - pattern: pickle.loads(...)
+    message: Pickle deserialization can lead to RCE. Avoid if possible.
+    languages: [python]
+    severity: WARNING
+
+  - id: python-yaml-unsafe-load
+    pattern: yaml.load(..., Loader=yaml.Loader)
+    message: Using yaml.load() with default Loader is unsafe. Use yaml.safe_load() instead.
+    languages: [python]
+    severity: ERROR
+
+  - id: python-assert-used
+    pattern: assert ...
+    message: Asserts can be disabled with -O flag. Use proper error handling.
+    languages: [python]
+    severity: INFO
+    paths:
+      exclude:
+        - tests/
+        - "**/test_*.py"
+
+  - id: python-requests-no-verify
+    patterns:
+      - pattern: requests.$METHOD(..., verify=False, ...)
+    message: SSL certificate verification is disabled. This is insecure.
+    languages: [python]
+    severity: ERROR
+
+  - id: python-debug-mode
+    patterns:
+      - pattern-either:
+          - pattern: DEBUG = True
+          - pattern: debug = True
+    message: Debug mode should not be enabled in production.
+    languages: [python]
+    severity: WARNING
+    paths:
+      exclude:
+        - tests/
+        - "**/test_*.py"
+        - "**/*config*.py"
