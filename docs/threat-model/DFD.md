@@ -54,15 +54,15 @@ flowchart TB
     USER -->|F1: HTTPS GET /| NGINX
     USER -->|F2: HTTPS POST /api/v1/auth/register| NGINX
     USER -->|F3: HTTPS POST /api/v1/auth/login| NGINX
-    USER -->|F4: HTTPS GET /api/v1/entries + JWT| NGINX
-    USER -->|F5: HTTPS POST /api/v1/entries + JWT| NGINX
+    USER -->|F4: HTTPS GET /api/v1/entries with JWT| NGINX
+    USER -->|F5: HTTPS POST /api/v1/entries with JWT| NGINX
 
     %% Attacker attempts
-    ATTACKER -.->|A1: Brute Force + SQL Injection + XSS| NGINX
+    ATTACKER -.->|A1: Brute Force SQL Injection XSS| NGINX
 
     %% DMZ to App
-    NGINX -->|F6: HTTP (internal) + Headers| FRONTEND
-    NGINX -->|F7: HTTP (internal) Proxy| API
+    NGINX -->|F6: HTTP internal with Headers| FRONTEND
+    NGINX -->|F7: HTTP internal Proxy| API
 
     FRONTEND -->|F8: HTTP API Calls| NGINX
 
@@ -72,8 +72,8 @@ flowchart TB
     API -->|F11: CRUD Entries| ENTRY
 
     AUTH -->|F12: Read JWT Secret| SECRETS
-    USER_SVC -->|F13: Hash Password + Store User| DB
-    ENTRY -->|F14: Query/Insert Entries by owner_id| DB
+    USER_SVC -->|F13: Hash Password Store User| DB
+    ENTRY -->|F14: Query Insert Entries by owner_id| DB
 
     %% External API (optional)
     ENTRY -.->|F15: HTTPS GET Fetch Metadata| METADATA
@@ -183,9 +183,9 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    ADMIN[👨‍💼 Admin User] -->|F16: HTTPS GET /api/v1/entries + admin JWT| NGINX
+    ADMIN[👨‍💼 Admin User] -->|F16: HTTPS GET /api/v1/entries with admin JWT| NGINX
     NGINX -->|F17: Proxy| API
-    API -->|F18: Check role=admin| AUTH
+    API -->|F18: Check role admin| AUTH
     AUTH -->|F19: Validate| API
     API -->|F20: Query all entries| DB[(Database)]
 
