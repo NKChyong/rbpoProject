@@ -1,16 +1,20 @@
 name: CI
+
 on:
   pull_request:
   push:
     branches: [main]
+
 permissions:
   contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  lint:
+    name: Lint & Format Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,16 +27,140 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run ruff
+        run: ruff check app tests
+
+      - name: Run black
+        run: black --check app tests
+
+      - name: Run isort
+        run: isort --check-only app tests
+
+  security:
+    name: Security Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: .semgrep.yaml
+
+      - name: Check for secrets
+        run: |
+          # Check for common secret patterns
+          echo "🔍 Checking for hardcoded secrets..."
+          if grep -r -E "(password|secret|api_key|token)\s*=\s*['\"][^'\"]+['\"]" app/ --include="*.py" | grep -v "test" | grep -v "example"; then
+            echo "❌ Potential hardcoded secrets found!"
+            exit 1
+          fi
+          echo "✅ No hardcoded secrets found"
+
+          # Check for AWS keys
+          if grep -r -E "AKIA[0-9A-Z]{16}" . --exclude-dir=".git" --exclude-dir="node_modules"; then
+            echo "❌ AWS access key found!"
+            exit 1
+          fi
+
+          # Check for private keys
+          if grep -r -E "BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY" . --exclude-dir=".git" --exclude-dir="node_modules"; then
+            echo "❌ Private key found!"
+            exit 1
+          fi
+
+          echo "✅ Security checks passed!"
+
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: readinglist_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
 
-      - name: Lint & Format
+      - name: Run tests with coverage
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/readinglist_test
         run: |
-          ruff check --output-format=github .
-          black --check .
-          isort --check-only .
+          pytest -v --cov=app --cov-report=xml --cov-report=term
 
-      - name: Tests
-        run: pytest -q
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        if: matrix.python-version == '3.11'
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
 
-      - name: Pre-commit (all files)
-        run: pre-commit run --all-files
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: readinglist-api:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  pre-commit:
+    name: Pre-commit Hooks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1

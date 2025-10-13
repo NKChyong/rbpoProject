@@ -1,0 +1,24 @@
+# Глобальный владелец (на курс)
+*                 @hse-secdev-2025-fall
+
+# Backend: API и бизнес-логика
+app/api/*         @hse-secdev-2025-fall
+app/services/*    @hse-secdev-2025-fall
+app/domain/*      @hse-secdev-2025-fall
+
+# Security: аутентификация и безопасность
+app/core/security.py    @hse-secdev-2025-fall
+app/api/v1/auth.py      @hse-secdev-2025-fall
+
+# Инфраструктура и конфигурация
+.github/*         @hse-secdev-2025-fall
+compose.yaml      @hse-secdev-2025-fall
+Dockerfile        @hse-secdev-2025-fall
+
+# Тесты
+tests/*           @hse-secdev-2025-fall
+
+# Документация
+README.md         @hse-secdev-2025-fall
+SECURITY.md       @hse-secdev-2025-fall
+docs/*            @hse-secdev-2025-fall
