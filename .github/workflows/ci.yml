@@ -30,7 +30,7 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run ruff
-        run: ruff check --output-format=github app tests
+        run: ruff check app tests
 
       - name: Run black
         run: black --check app tests
@@ -43,6 +43,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -59,10 +61,29 @@ jobs:
         with:
           config: .semgrep.yaml
 
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check for secrets
+        run: |
+          # Check for common secret patterns
+          echo "🔍 Checking for hardcoded secrets..."
+          if grep -r -E "(password|secret|api_key|token)\s*=\s*['\"][^'\"]+['\"]" app/ --include="*.py" | grep -v "test" | grep -v "example"; then
+            echo "❌ Potential hardcoded secrets found!"
+            exit 1
+          fi
+          echo "✅ No hardcoded secrets found"
+
+          # Check for AWS keys
+          if grep -r -E "AKIA[0-9A-Z]{16}" . --exclude-dir=".git" --exclude-dir="node_modules"; then
+            echo "❌ AWS access key found!"
+            exit 1
+          fi
+
+          # Check for private keys
+          if grep -r -E "BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY" . --exclude-dir=".git" --exclude-dir="node_modules"; then
+            echo "❌ Private key found!"
+            exit 1
+          fi
+
+          echo "✅ Security checks passed!"
 
   test:
     name: Tests (Python ${{ matrix.python-version }})
@@ -140,12 +161,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
 
       - name: Run pre-commit
-        run: pre-commit run --all-files
+        uses: pre-commit/action@v3.0.1

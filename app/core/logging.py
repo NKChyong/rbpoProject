@@ -9,9 +9,7 @@ from typing import Any
 from fastapi import Request
 
 # Context variable for request_id
-request_id_ctx: contextvars.ContextVar[str] = contextvars.ContextVar(
-    "request_id", default=""
-)
+request_id_ctx: contextvars.ContextVar[str] = contextvars.ContextVar("request_id", default="")
 
 
 class RequestIdFilter(logging.Filter):

@@ -43,9 +43,7 @@ app.middleware("http")(add_request_id)
 class ApiError(Exception):
     """Custom API error exception."""
 
-    def __init__(
-        self, code: str, message: str, status: int = 400, details: Optional[dict] = None
-    ):
+    def __init__(self, code: str, message: str, status: int = 400, details: Optional[dict] = None):
         """Initialize API error."""
         self.code = code
         self.message = message

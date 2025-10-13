@@ -88,9 +88,7 @@ class EntryBase(BaseModel):
         if isinstance(v, EntryKind):
             return v.value
         if v not in [k.value for k in EntryKind]:
-            raise ValueError(
-                f"Invalid kind. Must be one of: {[k.value for k in EntryKind]}"
-            )
+            raise ValueError(f"Invalid kind. Must be one of: {[k.value for k in EntryKind]}")
         return v
 
     @field_validator("status")
@@ -100,9 +98,7 @@ class EntryBase(BaseModel):
         if isinstance(v, EntryStatus):
             return v.value
         if v not in [s.value for s in EntryStatus]:
-            raise ValueError(
-                f"Invalid status. Must be one of: {[s.value for s in EntryStatus]}"
-            )
+            raise ValueError(f"Invalid status. Must be one of: {[s.value for s in EntryStatus]}")
         return v
 
 
@@ -130,9 +126,7 @@ class EntryUpdate(BaseModel):
         if isinstance(v, EntryKind):
             return v.value
         if v not in [k.value for k in EntryKind]:
-            raise ValueError(
-                f"Invalid kind. Must be one of: {[k.value for k in EntryKind]}"
-            )
+            raise ValueError(f"Invalid kind. Must be one of: {[k.value for k in EntryKind]}")
         return v
 
     @field_validator("status")
@@ -144,9 +138,7 @@ class EntryUpdate(BaseModel):
         if isinstance(v, EntryStatus):
             return v.value
         if v not in [s.value for s in EntryStatus]:
-            raise ValueError(
-                f"Invalid status. Must be one of: {[s.value for s in EntryStatus]}"
-            )
+            raise ValueError(f"Invalid status. Must be one of: {[s.value for s in EntryStatus]}")
         return v
 
 

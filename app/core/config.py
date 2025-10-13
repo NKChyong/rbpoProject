@@ -6,9 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Application settings."""
 
-    model_config = SettingsConfigDict(
-        env_file=".env", case_sensitive=False, extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
     # Application
     app_name: str = "Reading List API"
@@ -16,9 +14,7 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # Database
-    database_url: str = (
-        "postgresql+asyncpg://postgres:postgres@localhost:5432/readinglist"
-    )
+    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/readinglist"
     db_echo: bool = False
 
     # Security

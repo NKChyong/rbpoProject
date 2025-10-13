@@ -153,9 +153,7 @@ async def test_get_entry(client: AsyncClient, test_user: dict):
 
     # Create entry
     entry_data = {"title": "Test Entry", "kind": "book", "status": "to_read"}
-    create_response = await client.post(
-        "/api/v1/entries", json=entry_data, headers=headers
-    )
+    create_response = await client.post("/api/v1/entries", json=entry_data, headers=headers)
     entry_id = create_response.json()["id"]
 
     # Get entry
@@ -181,9 +179,7 @@ async def test_get_entry_forbidden(client: AsyncClient, test_user: dict):
     # Create first user and entry
     headers1 = {"Authorization": f"Bearer {test_user['access_token']}"}
     entry_data = {"title": "User 1 Entry", "kind": "book", "status": "to_read"}
-    create_response = await client.post(
-        "/api/v1/entries", json=entry_data, headers=headers1
-    )
+    create_response = await client.post("/api/v1/entries", json=entry_data, headers=headers1)
     entry_id = create_response.json()["id"]
 
     # Create second user
@@ -211,16 +207,12 @@ async def test_update_entry(client: AsyncClient, test_user: dict):
 
     # Create entry
     entry_data = {"title": "Original Title", "kind": "book", "status": "to_read"}
-    create_response = await client.post(
-        "/api/v1/entries", json=entry_data, headers=headers
-    )
+    create_response = await client.post("/api/v1/entries", json=entry_data, headers=headers)
     entry_id = create_response.json()["id"]
 
     # Update entry
     update_data = {"title": "Updated Title", "status": "in_progress"}
-    response = await client.patch(
-        f"/api/v1/entries/{entry_id}", json=update_data, headers=headers
-    )
+    response = await client.patch(f"/api/v1/entries/{entry_id}", json=update_data, headers=headers)
     assert response.status_code == 200
     data = response.json()
     assert data["title"] == update_data["title"]
@@ -235,9 +227,7 @@ async def test_delete_entry(client: AsyncClient, test_user: dict):
 
     # Create entry
     entry_data = {"title": "Entry to Delete", "kind": "article", "status": "to_read"}
-    create_response = await client.post(
-        "/api/v1/entries", json=entry_data, headers=headers
-    )
+    create_response = await client.post("/api/v1/entries", json=entry_data, headers=headers)
     entry_id = create_response.json()["id"]
 
     # Delete entry
@@ -250,16 +240,12 @@ async def test_delete_entry(client: AsyncClient, test_user: dict):
 
 
 @pytest.mark.asyncio
-async def test_admin_can_access_all_entries(
-    client: AsyncClient, test_user: dict, admin_user: dict
-):
+async def test_admin_can_access_all_entries(client: AsyncClient, test_user: dict, admin_user: dict):
     """Test that admin can access all entries."""
     # Create entry as regular user
     user_headers = {"Authorization": f"Bearer {test_user['access_token']}"}
     entry_data = {"title": "User Entry", "kind": "book", "status": "to_read"}
-    create_response = await client.post(
-        "/api/v1/entries", json=entry_data, headers=user_headers
-    )
+    create_response = await client.post("/api/v1/entries", json=entry_data, headers=user_headers)
     entry_id = create_response.json()["id"]
 
     # Access as admin
