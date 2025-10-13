@@ -22,49 +22,49 @@ flowchart TB
 
     subgraph DMZ["Trust Boundary: DMZ / Edge"]
         direction TB
-        NGINX[🔒 Nginx/Reverse Proxy<br/>TLS Termination]
-        FRONTEND[⚛️ React Frontend<br/>Static Files]
+        NGINX[🔒 Nginx/Reverse Proxy - TLS Termination]
+        FRONTEND[⚛️ React Frontend - Static Files]
     end
 
     subgraph AppLayer["Trust Boundary: Application Core"]
         direction TB
-        API[🐍 FastAPI Backend<br/>Auth & Business Logic]
+        API[🐍 FastAPI Backend - Auth & Business Logic]
 
         subgraph AuthModule["Authentication Module"]
-            AUTH[🔐 Auth Service<br/>JWT/Bcrypt]
+            AUTH[🔐 Auth Service - JWT/Bcrypt]
         end
 
         subgraph BusinessLogic["Business Logic"]
-            ENTRY[📚 Entry Service<br/>CRUD Operations]
+            ENTRY[📚 Entry Service - CRUD Operations]
             USER_SVC[👥 User Service]
         end
     end
 
     subgraph DataLayer["Trust Boundary: Data Persistence"]
         direction TB
-        DB[(🗄️ PostgreSQL<br/>Users & Entries)]
-        SECRETS[🔑 Secrets Storage<br/>JWT Keys, DB Creds]
+        DB[(🗄️ PostgreSQL - Users & Entries)]
+        SECRETS[🔑 Secrets Storage - JWT Keys, DB Creds]
     end
 
     subgraph External["External Services (Optional)"]
-        METADATA[📖 Metadata API<br/>Book Info]
+        METADATA[📖 Metadata API - Book Info]
     end
 
     %% User flows
     USER -->|F1: HTTPS GET /| NGINX
     USER -->|F2: HTTPS POST /api/v1/auth/register| NGINX
     USER -->|F3: HTTPS POST /api/v1/auth/login| NGINX
-    USER -->|F4: HTTPS GET /api/v1/entries<br/>Authorization: Bearer JWT| NGINX
-    USER -->|F5: HTTPS POST /api/v1/entries<br/>Authorization: Bearer JWT| NGINX
+    USER -->|F4: HTTPS GET /api/v1/entries + JWT| NGINX
+    USER -->|F5: HTTPS POST /api/v1/entries + JWT| NGINX
 
     %% Attacker attempts
-    ATTACKER -.->|A1: Brute Force<br/>SQL Injection<br/>XSS Attempts| NGINX
+    ATTACKER -.->|A1: Brute Force + SQL Injection + XSS| NGINX
 
     %% DMZ to App
-    NGINX -->|F6: HTTP (internal)<br/>Request + Headers| FRONTEND
-    NGINX -->|F7: HTTP (internal)<br/>Proxy to Backend| API
+    NGINX -->|F6: HTTP (internal) + Headers| FRONTEND
+    NGINX -->|F7: HTTP (internal) Proxy| API
 
-    FRONTEND -->|F8: HTTP GET/POST<br/>API Calls| NGINX
+    FRONTEND -->|F8: HTTP API Calls| NGINX
 
     %% App internal flows
     API -->|F9: Validate JWT| AUTH
@@ -72,11 +72,11 @@ flowchart TB
     API -->|F11: CRUD Entries| ENTRY
 
     AUTH -->|F12: Read JWT Secret| SECRETS
-    USER_SVC -->|F13: Hash Password<br/>Store User| DB
-    ENTRY -->|F14: Query/Insert<br/>Entries by owner_id| DB
+    USER_SVC -->|F13: Hash Password + Store User| DB
+    ENTRY -->|F14: Query/Insert Entries by owner_id| DB
 
     %% External API (optional)
-    ENTRY -.->|F15: HTTPS GET<br/>Fetch Metadata| METADATA
+    ENTRY -.->|F15: HTTPS GET Fetch Metadata| METADATA
 
     %% Styles
     style Internet fill:#ffcccc,stroke:#ff0000,stroke-width:3px
@@ -183,7 +183,7 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    ADMIN[👨‍💼 Admin User] -->|F16: HTTPS GET /api/v1/entries<br/>With admin JWT| NGINX
+    ADMIN[👨‍💼 Admin User] -->|F16: HTTPS GET /api/v1/entries + admin JWT| NGINX
     NGINX -->|F17: Proxy| API
     API -->|F18: Check role=admin| AUTH
     AUTH -->|F19: Validate| API
