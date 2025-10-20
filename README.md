@@ -161,5 +161,3 @@ docker-compose exec backend python scripts/create_admin.py admin@example.com adm
 По вопросам безопасности см. [SECURITY.md](SECURITY.md)
 
 ---
-
-Made with ❤️ for HSE SecDev 2025
