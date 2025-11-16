@@ -122,3 +122,48 @@ async def test_logout(client: AsyncClient, test_user: dict):
 
     response = await client.post("/api/v1/auth/logout", headers=headers)
     assert response.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_login_inactive_user(client: AsyncClient, db_session):
+    """Inactive users should receive 403 during login."""
+    user_data = {
+        "email": "inactive@example.com",
+        "username": "inactive_user",
+        "password": "StrongPass!234",
+    }
+    await client.post("/api/v1/auth/register", json=user_data)
+
+    from app.services.user_service import UserService
+
+    user_service = UserService(db_session)
+    user = await user_service.get_by_username(user_data["username"])
+    user.is_active = False
+    await db_session.commit()
+
+    response = await client.post("/api/v1/auth/login", json=user_data)
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_refresh_with_access_token_fails(client: AsyncClient, test_user: dict):
+    """Using an access token in refresh endpoint should fail."""
+    access_token = test_user["access_token"]
+    response = await client.post("/api/v1/auth/refresh", json={"refresh_token": access_token})
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_refresh_for_inactive_user(client: AsyncClient, db_session, test_user: dict):
+    """Refresh should fail if user becomes inactive."""
+    refresh_token = test_user["refresh_token"]
+
+    from app.services.user_service import UserService
+
+    user_service = UserService(db_session)
+    user = await user_service.get_by_username(test_user["user"]["username"])
+    user.is_active = False
+    await db_session.commit()
+
+    response = await client.post("/api/v1/auth/refresh", json={"refresh_token": refresh_token})
+    assert response.status_code == 401

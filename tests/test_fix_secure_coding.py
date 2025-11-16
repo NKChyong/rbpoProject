@@ -52,4 +52,3 @@ class TestSecureHTTPClient:
         client = SecureHTTPClient()
         with pytest.raises(ValueError):
             await client.get("https://127.0.0.1/secret")
-

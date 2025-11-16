@@ -22,6 +22,8 @@ from app.core.errors import (
 from app.core.http_client import SecureHTTPClient
 from app.core.upload import (
     check_symlinks,
+    cleanup_upload,
+    get_file_info,
     is_safe_path,
     secure_save,
     sniff_image_type,
@@ -238,6 +240,60 @@ class TestFileUploadSecurity:
             success, result = secure_save(temp_dir, "../../../etc/passwd", png_data)
             assert success is True  # UUID filename prevents traversal
 
+    def test_is_safe_path_detects_traversal(self):
+        """is_safe_path should block traversal outside base directory."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            base_path = Path(temp_dir)
+            target_path = base_path.parent / "other"
+            assert is_safe_path(base_path, target_path) is False
+
+    def test_check_symlinks_blocks_symlink_parents(self):
+        """check_symlinks should fail when encountering symlinked parents."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            base_path = Path(temp_dir)
+            target_dir = base_path / "target"
+            target_dir.mkdir()
+            link_dir = base_path / "link"
+            link_dir.symlink_to(target_dir, target_is_directory=True)
+            suspicious_path = link_dir / "file.txt"
+            assert check_symlinks(suspicious_path) is False
+
+    def test_get_file_info_and_cleanup_helpers(self):
+        """Utility helpers should handle missing files safely."""
+        assert get_file_info("/nonexistent/path.txt") is None
+        assert cleanup_upload("/nonexistent/path.txt") is False
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            png_data = b"\x89PNG\r\n\x1a\n" + b"valid"
+            success, stored_path = secure_save(temp_dir, "file.png", png_data)
+            assert success is True
+            info = get_file_info(stored_path)
+            assert info is not None and info["filename"].endswith(".png")
+            assert cleanup_upload(stored_path) is True
+
+    def test_secure_save_rejects_forced_traversal(self):
+        """Secure save should return path_traversal_detected when safety check fails."""
+        png_data = b"\x89PNG\r\n\x1a\npayload"
+        with (
+            tempfile.TemporaryDirectory() as temp_dir,
+            patch("app.core.upload.is_safe_path", return_value=False),
+        ):
+            success, reason = secure_save(temp_dir, "unsafe.png", png_data)
+            assert success is False
+            assert reason == "path_traversal_detected"
+
+    def test_secure_save_rejects_symlink_paths(self):
+        """Secure save should surface symlink_in_path when link detection fails."""
+        png_data = b"\x89PNG\r\n\x1a\npayload"
+        with (
+            tempfile.TemporaryDirectory() as temp_dir,
+            patch("app.core.upload.is_safe_path", return_value=True),
+            patch("app.core.upload.check_symlinks", return_value=False),
+        ):
+            success, reason = secure_save(temp_dir, "symlink.png", png_data)
+            assert success is False
+            assert reason == "symlink_in_path"
+
 
 class TestHTTPClientSecurity:
     """Test secure HTTP client functionality."""
@@ -267,6 +323,10 @@ class TestHTTPClientSecurity:
 
         for url in unsafe_urls:
             assert secure_client._validate_url(url) is False
+
+    def test_local_domain_blocked(self, secure_client):
+        """Local development domains should be considered unsafe."""
+        assert secure_client._validate_url("https://printer.local/resource") is False
 
     @pytest.mark.asyncio
     async def test_http_client_timeout(self, secure_client):
