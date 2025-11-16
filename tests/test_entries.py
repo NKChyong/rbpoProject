@@ -67,6 +67,30 @@ async def test_create_entry_invalid_status(client: AsyncClient, test_user: dict)
 
 
 @pytest.mark.asyncio
+async def test_create_entry_rejects_insecure_link(client: AsyncClient, test_user: dict):
+    """Entry creation should reject non-HTTPS or private network links."""
+    headers = {"Authorization": f"Bearer {test_user['access_token']}"}
+    insecure_payloads = [
+        {
+            "title": "HTTP Link",
+            "kind": "book",
+            "status": "to_read",
+            "link": "http://example.com/resource",
+        },
+        {
+            "title": "Private IP Link",
+            "kind": "book",
+            "status": "to_read",
+            "link": "https://127.0.0.1/admin",
+        },
+    ]
+
+    for payload in insecure_payloads:
+        response = await client.post("/api/v1/entries", json=payload, headers=headers)
+        assert response.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_list_entries(client: AsyncClient, test_user: dict):
     """Test listing entries."""
     headers = {"Authorization": f"Bearer {test_user['access_token']}"}
@@ -186,11 +210,11 @@ async def test_get_entry_forbidden(client: AsyncClient, test_user: dict):
     user2_data = {
         "email": "user2@example.com",
         "username": "user2",
-        "password": "password123",
+        "password": "An0therPass!45",
     }
     await client.post("/api/v1/auth/register", json=user2_data)
     login_response = await client.post(
-        "/api/v1/auth/login", json={"username": "user2", "password": "password123"}
+        "/api/v1/auth/login", json={"username": "user2", "password": "An0therPass!45"}
     )
     user2_token = login_response.json()["access_token"]
     headers2 = {"Authorization": f"Bearer {user2_token}"}

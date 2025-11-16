@@ -80,8 +80,8 @@ function Login({ onLogin }) {
 
         <div className="demo-credentials">
           <p><strong>Demo Credentials:</strong></p>
-          <p>👤 User: alice / password123</p>
-          <p>👨‍💼 Admin: admin / admin123</p>
+          <p>👤 User: alice / Alic3Strong!45</p>
+          <p>👨‍💼 Admin: admin / AdminSecur3!45</p>
         </div>
       </div>
     </div>

@@ -251,9 +251,7 @@ class TestHTTPClientSecurity:
 
     def test_url_validation_safe_urls(self, secure_client):
         """Test URL validation with safe URLs."""
-        # Test that the function exists and can be called
-        result = secure_client._validate_url("https://api.example.com/data")
-        assert isinstance(result, bool)
+        assert secure_client._validate_url("https://api.example.com/data") is True
 
     def test_url_validation_unsafe_urls(self, secure_client):
         """Test URL validation with unsafe URLs."""
@@ -263,6 +261,8 @@ class TestHTTPClientSecurity:
             "gopher://example.com",
             "javascript:alert(1)",
             "data:text/html,<script>alert(1)</script>",
+            "https://127.0.0.1/admin",
+            "https://localhost/dashboard",
         ]
 
         for url in unsafe_urls:
@@ -297,6 +297,12 @@ class TestHTTPClientSecurity:
             # Should succeed after retry
             response = await secure_client.get("https://example.com")
             assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_http_client_rejects_private_network(self, secure_client):
+        """Ensure requests to private networks are blocked before execution."""
+        with pytest.raises(ValueError):
+            await secure_client.get("https://127.0.0.1/secret")
 
     @pytest.mark.asyncio
     async def test_http_client_max_retries(self, secure_client):

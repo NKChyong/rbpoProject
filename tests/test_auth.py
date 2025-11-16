@@ -10,7 +10,7 @@ async def test_register_user(client: AsyncClient):
     user_data = {
         "email": "newuser@example.com",
         "username": "newuser",
-        "password": "password123",
+        "password": "StrongPass!234",
     }
 
     response = await client.post("/api/v1/auth/register", json=user_data)
@@ -28,7 +28,7 @@ async def test_register_duplicate_email(client: AsyncClient, test_user: dict):
     user_data = {
         "email": test_user["user"]["email"],
         "username": "anotheruser",
-        "password": "password123",
+        "password": "AnotherStr0ng!45",
     }
 
     response = await client.post("/api/v1/auth/register", json=user_data)
@@ -43,7 +43,7 @@ async def test_register_duplicate_username(client: AsyncClient, test_user: dict)
     user_data = {
         "email": "another@example.com",
         "username": test_user["user"]["username"],
-        "password": "password123",
+        "password": "AnotherStr0ng!45",
     }
 
     response = await client.post("/api/v1/auth/register", json=user_data)
@@ -75,10 +75,23 @@ async def test_login_invalid_credentials(client: AsyncClient, test_user: dict):
 @pytest.mark.asyncio
 async def test_login_nonexistent_user(client: AsyncClient):
     """Test login with nonexistent user."""
-    login_data = {"username": "nonexistent", "password": "password123"}
+    login_data = {"username": "nonexistent", "password": "StrongPass!234"}
 
     response = await client.post("/api/v1/auth/login", json=login_data)
     assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_register_user_weak_password(client: AsyncClient):
+    """Weak passwords should be rejected."""
+    user_data = {
+        "email": "weak@example.com",
+        "username": "weakuser",
+        "password": "password123",  # lacks complexity and length
+    }
+
+    response = await client.post("/api/v1/auth/register", json=user_data)
+    assert response.status_code == 422
 
 
 @pytest.mark.asyncio
