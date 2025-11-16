@@ -85,28 +85,13 @@ jobs:
 
           echo "✅ Security checks passed!"
 
-  test:
-    name: Tests (Python ${{ matrix.python-version }})
+  tests:
+    name: Backend Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         python-version: ["3.11", "3.12"]
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: readinglist_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
 
     steps:
       - uses: actions/checkout@v4
@@ -122,10 +107,7 @@ jobs:
           pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Run tests with coverage
-        env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/readinglist_test
-        run: |
-          pytest -v --cov=app --cov-report=xml --cov-report=term
+        run: pytest -v --cov=app --cov-report=xml --cov-report=term
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
