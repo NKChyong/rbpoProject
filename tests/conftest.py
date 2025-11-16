@@ -78,7 +78,7 @@ async def test_user(client: AsyncClient) -> dict:
     user_data = {
         "email": "test@example.com",
         "username": "testuser",
-        "password": "testpassword123",
+        "password": "Secur3Pass!45",
     }
 
     # Register user
@@ -109,7 +109,7 @@ async def admin_user(client: AsyncClient, db_session: AsyncSession) -> dict:
     admin = User(
         email="admin@example.com",
         username="admin",
-        hashed_password=get_password_hash("adminpassword123"),
+        hashed_password=get_password_hash("AdminSecur3!45"),
         role=UserRole.ADMIN.value,
         is_active=True,
     )
@@ -118,7 +118,7 @@ async def admin_user(client: AsyncClient, db_session: AsyncSession) -> dict:
     await db_session.refresh(admin)
 
     # Login to get token
-    login_data = {"username": "admin", "password": "adminpassword123"}
+    login_data = {"username": "admin", "password": "AdminSecur3!45"}
     response = await client.post("/api/v1/auth/login", json=login_data)
     assert response.status_code == 200
     tokens = response.json()

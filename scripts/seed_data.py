@@ -22,19 +22,19 @@ async def seed_database() -> None:
             {
                 "email": "alice@example.com",
                 "username": "alice",
-                "password": "password123",
+                "password": "Alic3Strong!45",
                 "role": UserRole.USER.value,
             },
             {
                 "email": "bob@example.com",
                 "username": "bob",
-                "password": "password123",
+                "password": "B0bStrong!45",
                 "role": UserRole.USER.value,
             },
             {
                 "email": "admin@example.com",
                 "username": "admin",
-                "password": "admin123",
+                "password": "AdminSecur3!45",
                 "role": UserRole.ADMIN.value,
             },
         ]
@@ -151,9 +151,9 @@ async def seed_database() -> None:
         await db.commit()
         print("\nDatabase seeded successfully!")
         print("\nSample credentials:")
-        print("  User 1: alice / password123")
-        print("  User 2: bob / password123")
-        print("  Admin: admin / admin123")
+        print("  User 1: alice / Alic3Strong!45")
+        print("  User 2: bob / B0bStrong!45")
+        print("  Admin: admin / AdminSecur3!45")
 
 
 if __name__ == "__main__":

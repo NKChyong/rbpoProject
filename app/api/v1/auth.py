@@ -24,7 +24,7 @@ async def register(
 
     - **email**: Valid email address
     - **username**: Unique username (3-100 characters)
-    - **password**: Strong password (8+ characters)
+    - **password**: Strong password (12+ characters with mixed case, digits, symbols)
     """
     user_service = UserService(db)
     user = await user_service.create_user(user_data)
