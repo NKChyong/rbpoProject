@@ -56,13 +56,8 @@ htmlcov/
 .gitattributes
 
 # Documentation
-*.md
-docs/
-docs/**
-
-# Tests
-tests/
-tests/**
+# *.md
+# docs/
 
 # Frontend
 frontend/

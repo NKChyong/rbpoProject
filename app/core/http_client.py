@@ -5,6 +5,7 @@ Implements timeouts, size limits, SSL verification, and retry policies.
 
 import asyncio
 import logging
+from ipaddress import ip_address, ip_network
 from typing import Any, Dict, Optional
 from urllib.parse import urlparse
 
@@ -12,6 +13,19 @@ import httpx
 from httpx import AsyncClient, HTTPError, Limits, Timeout
 
 logger = logging.getLogger(__name__)
+
+_DISALLOWED_HOSTS = {"localhost"}
+_PRIVATE_NETWORKS = (
+    ip_network("0.0.0.0/8"),
+    ip_network("10.0.0.0/8"),
+    ip_network("127.0.0.0/8"),
+    ip_network("169.254.0.0/16"),
+    ip_network("172.16.0.0/12"),
+    ip_network("192.168.0.0/16"),
+    ip_network("::1/128"),
+    ip_network("fc00::/7"),
+    ip_network("fe80::/10"),
+)
 
 
 class SecureHTTPClient:
@@ -84,11 +98,27 @@ class SecureHTTPClient:
             if parsed.scheme not in ("http", "https"):
                 return False
 
-            # In production, only allow HTTPS
-            # if not self.verify_ssl and parsed.scheme != 'https':
-            #     return False
+            host = (parsed.hostname or "").lower()
+            if not host:
+                return False
 
-            # Check for suspicious patterns (but allow localhost for development)
+            # Disallow known local hosts
+            if host in _DISALLOWED_HOSTS or host.endswith(".localhost"):
+                return False
+
+            # Block IP addresses within private or loopback networks
+            try:
+                ip = ip_address(host)
+            except ValueError:
+                # Not an IP address – disallow obvious local-only domains
+                if host.endswith(".local"):
+                    return False
+            else:
+                for network in _PRIVATE_NETWORKS:
+                    if ip in network:
+                        return False
+
+            # Check for suspicious patterns
             suspicious_patterns = ["file://", "ftp://", "gopher://"]
 
             for pattern in suspicious_patterns:

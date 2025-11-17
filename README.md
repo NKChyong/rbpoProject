@@ -94,9 +94,9 @@ docker-compose exec backend python scripts/seed_data.py
 ```
 
 Тестовые пользователи:
-- User: `alice` / `password123`
-- User: `bob` / `password123`
-- Admin: `admin` / `admin123`
+- User: `alice` / `Alic3Strong!45`
+- User: `bob` / `B0bStrong!45`
+- Admin: `admin` / `AdminSecur3!45`
 
 ### Создание admin пользователя
 
@@ -125,6 +125,7 @@ docker-compose exec backend python scripts/create_admin.py admin@example.com adm
 - **JWT токены**: Stateless аутентификация с access и refresh токенами
 - **Bcrypt**: Безопасное хеширование паролей (cost factor 12)
 - **RBAC**: Контроль доступа на основе ролей (user/admin)
+- **Парольная политика**: минимум 12 символов, верхний/нижний регистр, цифры и символ
 - **Owner-only**: Пользователи могут работать только со своими записями
 - **Валидация**: Pydantic валидация всех входных данных
 - **CORS**: Настроенные разрешенные домены
