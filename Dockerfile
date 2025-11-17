@@ -1,58 +1,55 @@
-# Build stage
-FROM python:3.11-slim AS build
+# syntax=docker/dockerfile:1.7-labs
+
+FROM python:3.11.9-slim-bullseye AS builder
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    postgresql-client \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
-COPY requirements.txt requirements-dev.txt ./
+COPY requirements.txt ./
 
-# Install Python dependencies (including dev for testing)
-RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip wheel --wheel-dir /wheels -r requirements.txt
 
-# Runtime stage
-FROM python:3.11-slim
+
+FROM python:3.11.9-slim-bullseye AS runtime
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    postgresql-client \
-    curl \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user
-RUN useradd -m -u 1000 appuser
+RUN groupadd -r appuser && useradd -r -g appuser -u 1000 appuser
 
-# Copy Python packages from build stage
-COPY --from=build /usr/local/lib/python3.11 /usr/local/lib/python3.11
-COPY --from=build /usr/local/bin /usr/local/bin
+COPY --from=builder /wheels /wheels
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-cache-dir /wheels/*
 
-# Copy application code
-COPY --chown=appuser:appuser . .
+COPY --chown=appuser:appuser entrypoint.sh ./entrypoint.sh
+COPY --chown=appuser:appuser alembic alembic
+COPY --chown=appuser:appuser alembic.ini ./alembic.ini
+COPY --chown=appuser:appuser app app
+COPY --chown=appuser:appuser requirements.txt ./requirements.txt
 
-# Make entrypoint executable
 RUN chmod +x entrypoint.sh
 
-# Switch to non-root user
 USER appuser
 
-# Expose port
 EXPOSE 8000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH=/app
-
-# Use entrypoint script
 ENTRYPOINT ["./entrypoint.sh"]

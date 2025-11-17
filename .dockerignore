@@ -58,16 +58,18 @@ htmlcov/
 # Documentation
 *.md
 docs/
+docs/**
+
+# Tests
+tests/
+tests/**
 
 # Frontend
 frontend/
 node_modules/
 
 # Docker
-Dockerfile
 .dockerignore
-compose.yaml
-docker-compose.yml
 
 # CI/CD
 .github/

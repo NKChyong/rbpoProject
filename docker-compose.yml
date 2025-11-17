@@ -1,5 +1,4 @@
 services:
-  # PostgreSQL Database
   db:
     image: postgres:16-alpine
     container_name: readinglist-db
@@ -19,7 +18,6 @@ services:
     networks:
       - readinglist-network
 
-  # FastAPI Backend
   backend:
     build:
       context: .
@@ -35,9 +33,16 @@ services:
       ALLOWED_ORIGINS: '["http://localhost:3000", "http://frontend:3000"]'
     ports:
       - "8000:8000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
     volumes:
-      - ./alembic:/app/alembic
-      - ./alembic.ini:/app/alembic.ini
+      - ./alembic:/app/alembic:ro
+      - ./alembic.ini:/app/alembic.ini:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -48,7 +53,6 @@ services:
       - readinglist-network
     restart: unless-stopped
 
-  # React Frontend
   frontend:
     build:
       context: ./frontend
@@ -77,3 +81,4 @@ volumes:
 networks:
   readinglist-network:
     driver: bridge
+
