@@ -64,10 +64,7 @@ frontend/
 node_modules/
 
 # Docker
-Dockerfile
 .dockerignore
-compose.yaml
-docker-compose.yml
 
 # CI/CD
 .github/

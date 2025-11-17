@@ -1,0 +1,3 @@
+ignored:
+  - DL3008 # Allow unpinned apt package versions due to security updates
+  - DL3013 # Allow pip installations without explicit version pinning (managed via requirements.txt)
