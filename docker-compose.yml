@@ -81,5 +81,3 @@ volumes:
 networks:
   readinglist-network:
     driver: bridge
-
-
