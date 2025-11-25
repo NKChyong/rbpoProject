@@ -108,7 +108,7 @@ def check_symlinks(path: Path, base_path: Optional[Path] = None) -> bool:
         if base_path:
             base_resolved = base_path.resolve()
             path_resolved = path.resolve()
-            
+
             # Only check parents between path and base_path
             current = path_resolved
             while current != base_resolved and current != current.parent:

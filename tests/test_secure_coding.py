@@ -199,7 +199,7 @@ class TestFileUploadSecurity:
             file_path.touch()
             # Should return True when checking only within base_path
             assert check_symlinks(file_path, base_path) is True
-            
+
             # Test without base_path on systems without symlinks in temp paths
             # (this may vary by OS, so we just check it returns a boolean)
             result = check_symlinks(file_path)
