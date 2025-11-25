@@ -174,13 +174,13 @@ class SecureHTTPClient:
 
             except httpx.TimeoutException as e:
                 logger.warning(f"Request timeout for {url}: {e}")
-                raise HTTPError(f"Request timeout: {e}")
+                raise HTTPError(f"Request timeout: {e}") from e
             except httpx.ConnectError as e:
                 logger.warning(f"Connection error for {url}: {e}")
-                raise HTTPError(f"Connection error: {e}")
+                raise HTTPError(f"Connection error: {e}") from e
             except httpx.HTTPStatusError as e:
                 logger.warning(f"HTTP error for {url}: {e.response.status_code}")
-                raise HTTPError(f"HTTP error {e.response.status_code}: {e}")
+                raise HTTPError(f"HTTP error {e.response.status_code}: {e}") from e
             except Exception as e:
                 logger.error(f"Unexpected error for {url}: {e}")
                 raise HTTPError(f"Unexpected error: {e}")
@@ -203,14 +203,21 @@ class SecureHTTPClient:
         for attempt in range(self.max_retries + 1):
             try:
                 return await self._make_request(method, url, **kwargs)
-            except (httpx.TimeoutException, httpx.ConnectError) as e:
-                last_exception = e
-                if attempt < self.max_retries:
-                    logger.info(f"Retry {attempt + 1}/{self.max_retries} for {url} in {delay}s")
-                    await asyncio.sleep(delay)
-                    delay *= 2  # Exponential backoff
-                else:
+            except HTTPError as e:
+                # Determine if this HTTPError originated from a timeout/connection issue
+                underlying = e.__cause__
+                if isinstance(underlying, (httpx.TimeoutException, httpx.ConnectError)):
+                    last_exception = e
+                    if attempt < self.max_retries:
+                        logger.info(
+                            f"Retry {attempt + 1}/{self.max_retries} for {url} in {delay}s"
+                        )
+                        await asyncio.sleep(delay)
+                        delay *= 2  # Exponential backoff
+                        continue
                     break
+                # Non-retriable HTTPError
+                raise e
             except Exception as e:
                 # Don't retry on other errors
                 raise e
