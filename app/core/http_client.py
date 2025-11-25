@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 from urllib.parse import urlparse
 
 import httpx
-from httpx import AsyncClient, HTTPError, Limits, Timeout
+from httpx import HTTPError, Limits, Timeout
 
 logger = logging.getLogger(__name__)
 
@@ -162,7 +162,7 @@ class SecureHTTPClient:
         # Add any additional parameters
         request_params.update(kwargs)
 
-        async with AsyncClient(**request_params) as client:
+        async with httpx.AsyncClient(**request_params) as client:
             try:
                 response = await client.request(method, url)
 
