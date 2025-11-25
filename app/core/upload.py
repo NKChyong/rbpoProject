@@ -92,22 +92,36 @@ def is_safe_path(base_path: Path, target_path: Path) -> bool:
         return False
 
 
-def check_symlinks(path: Path) -> bool:
+def check_symlinks(path: Path, base_path: Optional[Path] = None) -> bool:
     """
-    Check if any parent directory contains symlinks.
+    Check if any parent directory contains symlinks within the base path.
 
     Args:
         path: File path to check
+        base_path: Base directory to limit symlink checking (optional)
 
     Returns:
-        True if no symlinks found in parent directories
+        True if no symlinks found in parent directories (within base_path if provided)
     """
     try:
-        # Check each parent directory for symlinks
-        for parent in path.parents:
-            if parent.is_symlink():
-                return False
-        return True
+        # If base_path is provided, only check parents within base_path
+        if base_path:
+            base_resolved = base_path.resolve()
+            path_resolved = path.resolve()
+            
+            # Only check parents between path and base_path
+            current = path_resolved
+            while current != base_resolved and current != current.parent:
+                if current.is_symlink():
+                    return False
+                current = current.parent
+            return True
+        else:
+            # Check all parent directories for symlinks
+            for parent in path.parents:
+                if parent.is_symlink():
+                    return False
+            return True
     except (OSError, ValueError):
         return False
 
@@ -153,8 +167,8 @@ def secure_save(base_dir: str, filename_hint: str, data: bytes) -> Tuple[bool, s
         if not is_safe_path(base_path, target_path):
             return False, "path_traversal_detected"
 
-        # Check for symlinks in parent directories
-        if not check_symlinks(target_path):
+        # Check for symlinks in parent directories (only within base_path)
+        if not check_symlinks(target_path, base_path):
             return False, "symlink_in_path"
 
         # Ensure target directory exists

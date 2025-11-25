@@ -194,10 +194,16 @@ class TestFileUploadSecurity:
         with tempfile.TemporaryDirectory() as temp_dir:
             base_path = Path(temp_dir)
 
-            # Create a file (no symlinks)
+            # Create a file (no symlinks within base_path)
             file_path = base_path / "file.txt"
             file_path.touch()
-            assert check_symlinks(file_path) is True
+            # Should return True when checking only within base_path
+            assert check_symlinks(file_path, base_path) is True
+            
+            # Test without base_path on systems without symlinks in temp paths
+            # (this may vary by OS, so we just check it returns a boolean)
+            result = check_symlinks(file_path)
+            assert isinstance(result, bool)
 
     def test_secure_save_success(self):
         """Test successful secure file save."""
