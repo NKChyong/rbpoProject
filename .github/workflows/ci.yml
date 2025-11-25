@@ -208,7 +208,7 @@ jobs:
 
       - name: Test Docker image
         run: |
-          docker run --rm ${{ env.IMAGE_NAME_LOWER }}:test python -c "print('Docker image works!')"
+          docker run --rm --entrypoint python ${{ env.IMAGE_NAME_LOWER }}:test -c "print('Docker image works!')"
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@0.20.0
