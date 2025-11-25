@@ -180,13 +180,17 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Normalize image name
+        run: |
+          echo "IMAGE_NAME_LOWER=${IMAGE_NAME,,}" >> "$GITHUB_ENV"
+
       # C2: Docker layer caching ★★
       - name: Build Docker image with cache
         uses: docker/build-push-action@v5
         with:
           context: .
           push: false
-          tags: ${{ env.IMAGE_NAME }}:test
+          tags: ${{ env.IMAGE_NAME_LOWER }}:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
           outputs: type=docker,dest=/tmp/image.tar
@@ -204,12 +208,12 @@ jobs:
 
       - name: Test Docker image
         run: |
-          docker run --rm ${{ env.IMAGE_NAME }}:test python -c "print('Docker image works!')"
+          docker run --rm ${{ env.IMAGE_NAME_LOWER }}:test python -c "print('Docker image works!')"
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          image-ref: ${{ env.IMAGE_NAME }}:test
+          image-ref: ${{ env.IMAGE_NAME_LOWER }}:test
           format: sarif
           output: trivy-report.sarif
           severity: CRITICAL,HIGH
@@ -240,6 +244,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Normalize image name
+        run: |
+          echo "IMAGE_NAME_LOWER=${IMAGE_NAME,,}" >> "$GITHUB_ENV"
+
       - name: Download Docker image
         uses: actions/download-artifact@v4
         with:
@@ -267,7 +275,7 @@ jobs:
           echo "🔧 Running database migrations (dry-run)..."
           echo "  → Migration check: OK"
           echo "🐳 Pushing Docker image to staging registry..."
-          echo "  → Image: ${{ env.IMAGE_NAME }}:staging-${{ github.sha }}"
+          echo "  → Image: ${{ env.IMAGE_NAME_LOWER }}:staging-${{ github.sha }}"
           echo "  → Tag: staging-latest"
           echo "🔄 Updating staging environment..."
           echo "  → Rolling update: 0/3 pods ready"
@@ -276,7 +284,7 @@ jobs:
           echo ""
           echo "📊 Deployment Summary:"
           echo "  Environment: staging"
-          echo "  Image: ${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          echo "  Image: ${{ env.IMAGE_NAME_LOWER }}:${{ github.sha }}"
           echo "  Deployed at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           echo "  Commit: ${{ github.sha }}"
 
@@ -301,7 +309,7 @@ jobs:
           Deployed By:     ${{ github.actor }}
           Commit:          ${{ github.sha }}
           Branch:          ${{ github.ref_name }}
-          Image:           ${{ env.IMAGE_NAME }}:staging-${{ github.sha }}
+          Image:           ${{ env.IMAGE_NAME_LOWER }}:staging-${{ github.sha }}
           Deployment Time: $(date -u +%Y-%m-%dT%H:%M:%SZ)
           
           Status:          ✅ SUCCESS
@@ -391,6 +399,10 @@ jobs:
     if: github.ref == 'refs/heads/main'
     
     steps:
+      - name: Normalize image name
+        run: |
+          echo "IMAGE_NAME_LOWER=${IMAGE_NAME,,}" >> "$GITHUB_ENV"
+
       - name: Production readiness check
         run: |
           echo "🎯 Checking production readiness..."
@@ -406,5 +418,5 @@ jobs:
           echo "  [ ] Notify stakeholders"
           echo ""
           echo "🚀 Ready for production promotion!"
-          echo "   Image: ${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          echo "   Image: ${{ env.IMAGE_NAME_LOWER }}:${{ github.sha }}"
           echo "   To deploy: Manually trigger production workflow"
