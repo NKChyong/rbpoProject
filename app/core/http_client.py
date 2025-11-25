@@ -167,13 +167,8 @@ class SecureHTTPClient:
                 response = await client.request(method, url)
 
                 # Check response size
-                if (
-                    hasattr(response, "content")
-                    and len(response.content) > self.max_response_size
-                ):
-                    raise HTTPError(
-                        f"Response too large: {len(response.content)} bytes"
-                    )
+                if hasattr(response, "content") and len(response.content) > self.max_response_size:
+                    raise HTTPError(f"Response too large: {len(response.content)} bytes")
 
                 return response
 
@@ -215,8 +210,7 @@ class SecureHTTPClient:
                     last_exception = e
                     if attempt < self.max_retries:
                         logger.info(
-                            f"Retry {attempt + 1}/{self.max_retries} "
-                            f"for {url} in {delay}s"
+                            f"Retry {attempt + 1}/{self.max_retries} " f"for {url} in {delay}s"
                         )
                         await asyncio.sleep(delay)
                         delay *= 2  # Exponential backoff
@@ -229,9 +223,7 @@ class SecureHTTPClient:
                 raise e
 
         # If we get here, all retries failed
-        raise HTTPError(
-            f"Request failed after {self.max_retries} retries: {last_exception}"
-        )
+        raise HTTPError(f"Request failed after {self.max_retries} retries: {last_exception}")
 
     async def get(
         self,
@@ -252,9 +244,7 @@ class SecureHTTPClient:
         Returns:
             HTTP response
         """
-        return await self._retry_request(
-            "GET", url, params=params, headers=headers, **kwargs
-        )
+        return await self._retry_request("GET", url, params=params, headers=headers, **kwargs)
 
     async def post(
         self,
