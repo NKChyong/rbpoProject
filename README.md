@@ -4,6 +4,7 @@
 
 REST API для управления списком материалов к прочтению (книги, статьи, видео, подкасты). Реализовано с использованием FastAPI, PostgreSQL и лучших практик безопасности.
 
+![CI](https://github.com/NKChyong/rbpoProject/actions/workflows/ci.yml/badge.svg)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org)
