@@ -1,0 +1,128 @@
+name: Security - SBOM & SCA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - p09-sbom-sca
+    paths:
+      - "**/*.py"
+      - "requirements*.txt"
+      - ".github/workflows/ci-sbom-sca.yml"
+      - "policy/waivers.yml"
+      - "project/69_sbom-vuln-mgmt.md"
+  pull_request:
+    paths:
+      - "**/*.py"
+      - "requirements*.txt"
+      - ".github/workflows/ci-sbom-sca.yml"
+      - "policy/waivers.yml"
+      - "project/69_sbom-vuln-mgmt.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  EVIDENCE_DIR: EVIDENCE/P09
+  SYFT_IMAGE: anchore/syft:v1.17.0
+  GRYPE_IMAGE: anchore/grype:v0.78.1
+
+jobs:
+  sbom_sca:
+    name: SBOM & SCA evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure evidence directory
+        run: |
+          set -euo pipefail
+          mkdir -p "${EVIDENCE_DIR}"
+          cat <<JSON > "${EVIDENCE_DIR}/job_metadata.json"
+          {
+            "commit": "${GITHUB_SHA}",
+            "workflow": "${GITHUB_WORKFLOW}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "run_attempt": "${GITHUB_RUN_ATTEMPT}",
+            "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          JSON
+
+      - name: Generate SBOM (Syft CycloneDX)
+        env:
+          SYFT_IMAGE: ${{ env.SYFT_IMAGE }}
+        run: |
+          set -euo pipefail
+          docker run --pull always --rm \
+            -v "$PWD":/work -w /work \
+            "$SYFT_IMAGE" \
+            packages dir:. -o cyclonedx-json > "${EVIDENCE_DIR}/sbom.json"
+
+      - name: SCA scan (Grype)
+        env:
+          GRYPE_IMAGE: ${{ env.GRYPE_IMAGE }}
+        run: |
+          set -euo pipefail
+          docker run --pull always --rm \
+            -v "$PWD":/work -w /work \
+            "$GRYPE_IMAGE" \
+            sbom:/work/${EVIDENCE_DIR}/sbom.json -o json > "${EVIDENCE_DIR}/sca_report.json"
+
+      - name: Build severity summary
+        id: sca_summary
+        run: |
+          set -euo pipefail
+          SUMMARY_FILE="${EVIDENCE_DIR}/sca_summary.md"
+          {
+            echo "# SCA summary"
+            echo ""
+            echo "- Commit: $GITHUB_SHA"
+            echo "- Workflow run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "- Tooling: Syft ${SYFT_IMAGE##*:}, Grype ${GRYPE_IMAGE##*:}"
+            echo ""
+          } > "${SUMMARY_FILE}"
+
+          if jq -e '.matches | length > 0' "${EVIDENCE_DIR}/sca_report.json" >/dev/null; then
+            {
+              echo "| Severity | Count |"
+              echo "|----------|-------|"
+              jq -r '
+                .matches
+                | sort_by(.vulnerability.severity)
+                | group_by(.vulnerability.severity // "UNKNOWN")
+                | map({severity: (.[0].vulnerability.severity // "UNKNOWN"), count: length})
+                | sort_by(.severity)
+                | reverse
+                | map("| \(.severity) | \(.count) |")
+                | .[]
+              ' "${EVIDENCE_DIR}/sca_report.json"
+            } >> "${SUMMARY_FILE}"
+          else
+            echo "No vulnerabilities detected by Grype." >> "${SUMMARY_FILE}"
+          fi
+
+          {
+            echo ""
+            echo "Policy: see policy/waivers.yml and project/69_sbom-vuln-mgmt.md for triage rules."
+          } >> "${SUMMARY_FILE}"
+
+          {
+            echo "## SBOM & SCA results"
+            echo ""
+            cat "${SUMMARY_FILE}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload SBOM/SCA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P09_EVIDENCE-${{ github.sha }}
+          path: ${{ env.EVIDENCE_DIR }}
+          retention-days: 30
