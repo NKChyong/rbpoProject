@@ -10,7 +10,7 @@
    при изменениях Python-кода, `requirements*.txt` и самой политики.
 2. Syft (`anchore/syft:v1.17.0`) выпускает CycloneDX SBOM →
    `EVIDENCE/P09/sbom.json`.
-3. Grype (`anchore/grype:v0.78.1`) сканирует SBOM и сохраняет отчёт
+3. Grype (`anchore/grype:v0.104.1`) сканирует SBOM и сохраняет отчёт
    `EVIDENCE/P09/sca_report.json`.
 4. Скрипт собирает агрегированную таблицу severity (`sca_summary.md`)
    и пушит директорию целиком в артефакт `P09_EVIDENCE-<commit>`.
@@ -70,7 +70,7 @@
 docker run --rm -v $PWD:/work -w /work anchore/syft:v1.17.0 \
   packages dir:. -o cyclonedx-json > EVIDENCE/P09/sbom.json
 
-docker run --rm -v $PWD:/work -w /work anchore/grype:v0.78.1 \
+docker run --rm -v $PWD:/work -w /work anchore/grype:v0.104.1 \
   sbom:/work/EVIDENCE/P09/sbom.json -o json > EVIDENCE/P09/sca_report.json
 
 echo "# SCA summary" > EVIDENCE/P09/sca_summary.md

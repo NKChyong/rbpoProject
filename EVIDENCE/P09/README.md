@@ -5,7 +5,7 @@
 оказываются материалы, привязанные к конкретному коммиту:
 
 - `sbom.json` — CycloneDX SBOM, сгенерированный Syft (`anchore/syft:v1.17.0`);
-- `sca_report.json` — отчёт Grype (`anchore/grype:v0.78.1`) поверх SBOM;
+- `sca_report.json` — отчёт Grype (`anchore/grype:v0.104.1`) поверх SBOM;
 - `sca_summary.md` — агрегированная сводка по severity + ссылка на waiver-политику;
 - `job_metadata.json` — техническая привязка к `commit/run_id`.
 
