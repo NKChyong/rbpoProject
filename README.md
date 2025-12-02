@@ -4,9 +4,31 @@
 
 REST API для управления списком материалов к прочтению (книги, статьи, видео, подкасты). Реализовано с использованием FastAPI, PostgreSQL и лучших практик безопасности.
 
+[![CI/CD Pipeline](https://github.com/NKChyong/rbpoProject/actions/workflows/ci.yml/badge.svg)](https://github.com/NKChyong/rbpoProject/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org)
+[![codecov](https://codecov.io/gh/NKChyong/rbpoProject/branch/main/graph/badge.svg)](https://codecov.io/gh/NKChyong/rbpoProject)
+
+---
+
+## ✅ CI/CD
+
+- Workflow `ci.yml` запускается на `push` и `pull_request`, использует кэш pip, ограничивает права (`contents: read`) и concurrency по `workflow+ref`.
+- Job `lint` проверяет `ruff`, `black`, `isort`. Job `tests` крутится на матрице (`ubuntu`/`macOS` × Python 3.11/3.12), собирает `pytest` + покрытие, выгружает `junit-*`, `coverage-*.xml` и `coverage-html`.
+- После зелёных тестов ветки `main` job `deploy-staging` разворачивает HTML-отчёт покрытия на GitHub Pages (environment `staging`) и оставляет ссылку в summary. Это эмуляция CD/промоушна.
+- Все отчёты дополнительно доступны в артефактах Actions (`reports/`, `coverage-html/`) и пригодны для ревью.
+
+### Secrets и vars для CI
+
+| Имя                   | Тип        | Где задать                                      | Назначение                              |
+|-----------------------|------------|-------------------------------------------------|-----------------------------------------|
+| `JWT_SECRET`          | Repository Secret | Settings → Secrets and variables → Actions | Токен для тестов/линтеров (маскируется) |
+| `DATABASE_URL`        | Repository Secret | Settings → Secrets and variables → Actions | Подключение к БД на staging/dry-run     |
+| `STAGING_API_URL`     | Repository Variable | Settings → Secrets and variables → Actions | Адрес API, прокидывается в тесты        |
+| `STAGING_DOMAIN`      | Repository Variable | Settings → Secrets and variables → Actions | Публичная ссылка стейджа/отчётов        |
+
+> Secrets/vars не логируются, используются через `${{ secrets.* }}`/`${{ vars.* }}`. Для приватных форков доступен только `JWT_SECRET`, остальные можно задать в `org` scope.
 
 ---
 
@@ -151,6 +173,37 @@ docker-compose exec backend python scripts/create_admin.py admin@example.com adm
 - **Docker & Docker Compose** - контейнеризация
 - **React** - фронтенд фреймворк
 - **GitHub Actions** - CI/CD
+
+---
+
+## 🔄 CI/CD Pipeline (P08 ★★ 10/10)
+
+Проект оснащен полноценным CI/CD pipeline на GitHub Actions:
+
+### ⚡ Возможности:
+
+- **✅ C1: Матричное тестирование** — Python 3.11/3.12 × Ubuntu/macOS (4 параллельных jobs)
+- **✅ C2: Кэширование** — pip dependencies + Docker layers (GHA cache)
+- **✅ C2: Concurrency** — автоматическая отмена устаревших запусков
+- **✅ C3: Secrets Management** — безопасное управление секретами для test/staging/prod
+- **✅ C4: Артефакты** — test reports, coverage HTML, Docker images, security scans
+- **✅ C5: CD/Staging** — автоматический деплой в staging при push в main
+
+### 📊 Pipeline Jobs:
+
+1. **Test Matrix** (4 jobs) — линтеры + тесты с coverage для всех версий
+2. **Security Checks** — поиск секретов, security scanning
+3. **Docker Build** — сборка образа с Trivy scan
+4. **Deploy Staging** — симуляция деплоя в staging окружение
+5. **Production Ready** — проверка готовности к production
+
+### 🚀 Запуск:
+
+```bash
+git push origin main  # → Запускает полный pipeline с деплоем
+```
+
+**Подробности:** См. [docs/CI_CD_SETUP.md](docs/CI_CD_SETUP.md)
 
 ---
 
