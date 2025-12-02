@@ -20,4 +20,23 @@ waivers:
     issue: "https://github.com/NKChyong/rbpoProject/issues/209"
     expires_at: "2026-03-31"
     approved_by: "security@rbpo.example"
+  - id: "GHSA-9jgg-88mc-972h"
+    package: "webpack-dev-server"
+    version: "4.15.2"
+    severity: "High"
+    reason: >
+      CRA 5.0.1 жёстко фиксирует webpack-dev-server 4.x. Переход на
+      5.2.1 требует обновления react-scripts или миграции на альтернативный
+      билд-пайплайн (Vite/Webpack 5 direct). В production мы не используем
+      dev server; риск ограничен локальной разработкой.
+    detection: "Grype SBOM scan (Security - SBOM & SCA)"
+    mitigation: >
+      Использовать dev-server только на доверенных хостах,
+      включить HTTPS/localhost, контролировать список разработчиков.
+      Планируем перевод фронтенда на Vite (issue #210) к Q2 2026, что
+      автоматически вынесет webpack-dev-server.
+    tracking: "project/69_sbom-vuln-mgmt.md#waiver-webpack-dev-server"
+    issue: "https://github.com/NKChyong/rbpoProject/issues/210"
+    expires_at: "2026-06-30"
+    approved_by: "security@rbpo.example"
 
