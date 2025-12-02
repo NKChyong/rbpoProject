@@ -61,7 +61,7 @@
   ассетов (`npm run build`). Production bundle не содержит уязвимый код.
 - **Митигирующие меры:** ограничение доступа к CI runners,
   контроль входных данных (SVG) и план миграции на Vite.
-- **План:** задача [issue #209](https://github.com/NKChyong/rbpoProject/issues/209),
+- **План:** задача [issue #7](https://github.com/NKChyong/rbpoProject/issues/7),
   срок до 31.03.2026. После миграции waiver будет удалён.
 
 #### Waiver: webpack-dev-server (GHSA-9jgg-88mc-972h) {#waiver-webpack-dev-server}
@@ -75,7 +75,7 @@
   `localhost`, отключение проксирования внешних источников, контроль
   браузеров/расширений. В репозитории запрещено деплоить сборки,
   сделанные на dev server.
-- **План:** [issue #210](https://github.com/NKChyong/rbpoProject/issues/210)
+- **План:** [issue #8](https://github.com/NKChyong/rbpoProject/issues/8)
   описывает переход на Vite/Webpack 5. После миграции waiver снимем
   (ETA Q2 2026).
 

@@ -17,7 +17,7 @@ waivers:
       где зависимость можно обновить вручную. Также рассматривается npm
       overrides (node 18+). Реализация запланирована в спринте 'Q1 2026'.
     tracking: "project/69_sbom-vuln-mgmt.md#waiver-nth-check"
-    issue: "https://github.com/NKChyong/rbpoProject/issues/209"
+    issue: "https://github.com/NKChyong/rbpoProject/issues/7"
     expires_at: "2026-03-31"
     approved_by: "security@rbpo.example"
   - id: "GHSA-9jgg-88mc-972h"
@@ -33,10 +33,10 @@ waivers:
     mitigation: >
       Использовать dev-server только на доверенных хостах,
       включить HTTPS/localhost, контролировать список разработчиков.
-      Планируем перевод фронтенда на Vite (issue #210) к Q2 2026, что
+      Планируем перевод фронтенда на Vite (issue #8) к Q2 2026, что
       автоматически вынесет webpack-dev-server.
     tracking: "project/69_sbom-vuln-mgmt.md#waiver-webpack-dev-server"
-    issue: "https://github.com/NKChyong/rbpoProject/issues/210"
+    issue: "https://github.com/NKChyong/rbpoProject/issues/8"
     expires_at: "2026-06-30"
     approved_by: "security@rbpo.example"
 
