@@ -8,7 +8,7 @@
 1. Workflow `Security - SBOM & SCA`
    (`.github/workflows/ci-sbom-sca.yml`) срабатывает на `push`/`PR`
    при изменениях Python-кода, `requirements*.txt` и самой политики.
-2. Syft (`anchore/syft:v1.17.0`) выпускает CycloneDX SBOM →
+2. Syft (`anchore/syft:v1.38.0`) выпускает CycloneDX SBOM →
    `EVIDENCE/P09/sbom.json`.
 3. Grype (`anchore/grype:v0.104.1`) сканирует SBOM и сохраняет отчёт
    `EVIDENCE/P09/sca_report.json`.
@@ -82,7 +82,7 @@
 ## 5. Как воспроизвести локально
 
 ```
-docker run --rm -v $PWD:/work -w /work anchore/syft:v1.17.0 \
+docker run --rm -v $PWD:/work -w /work anchore/syft:v1.38.0 \
   packages dir:. -o cyclonedx-json > EVIDENCE/P09/sbom.json
 
 docker run --rm -v $PWD:/work -w /work anchore/grype:v0.104.1 \

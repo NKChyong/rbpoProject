@@ -29,7 +29,7 @@ concurrency:
 
 env:
   EVIDENCE_DIR: EVIDENCE/P09
-  SYFT_IMAGE: anchore/syft:v1.17.0
+  SYFT_IMAGE: anchore/syft:v1.38.0
   GRYPE_IMAGE: anchore/grype:v0.104.1
 
 jobs:

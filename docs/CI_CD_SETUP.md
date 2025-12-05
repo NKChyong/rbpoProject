@@ -8,7 +8,7 @@
 
 - Workflow [`Security - SBOM & SCA`](../.github/workflows/ci-sbom-sca.yml)
   реагирует на изменения Python-кода, зависимостей и самой политики.
-- Инструменты зафиксированы: Syft `anchore/syft:v1.17.0`,
+- Инструменты зафиксированы: Syft `anchore/syft:v1.38.0`,
   Grype `anchore/grype:v0.104.1`.
 - Последовательность шага:
   1. Создать `EVIDENCE/P09` + `job_metadata.json`.

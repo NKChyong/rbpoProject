@@ -212,7 +212,7 @@ git push origin main  # → Запускает полный pipeline с депл
 
 - Workflow [`Security - SBOM & SCA`](.github/workflows/ci-sbom-sca.yml) запускается на `push`/`pull_request`
   и вручную через `workflow_dispatch`. Он фиксирует версию инструментов
-  (Syft `anchore/syft:v1.17.0`, Grype `anchore/grype:v0.104.1`) для
+  (Syft `anchore/syft:v1.38.0`, Grype `anchore/grype:v0.104.1`) для
   воспроизводимости.
 - Результаты попадают в `EVIDENCE/P09/`:
   `sbom.json`, `sca_report.json`, `sca_summary.md`, `job_metadata.json`.
@@ -227,7 +227,7 @@ git push origin main  # → Запускает полный pipeline с депл
 
   ```bash
   mkdir -p EVIDENCE/P09
-  docker run --rm -v $PWD:/work -w /work anchore/syft:v1.17.0 \
+  docker run --rm -v $PWD:/work -w /work anchore/syft:v1.38.0 \
     packages dir:. -o cyclonedx-json > EVIDENCE/P09/sbom.json
   docker run --rm -v $PWD:/work -w /work anchore/grype:v0.104.1 \
     sbom:/work/EVIDENCE/P09/sbom.json -o json > EVIDENCE/P09/sca_report.json
