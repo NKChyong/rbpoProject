@@ -5,6 +5,7 @@
 REST API для управления списком материалов к прочтению (книги, статьи, видео, подкасты). Реализовано с использованием FastAPI, PostgreSQL и лучших практик безопасности.
 
 [![CI/CD Pipeline](https://github.com/NKChyong/rbpoProject/actions/workflows/ci.yml/badge.svg)](https://github.com/NKChyong/rbpoProject/actions/workflows/ci.yml)
+[![Security - SBOM & SCA](https://github.com/NKChyong/rbpoProject/actions/workflows/ci-sbom-sca.yml/badge.svg)](https://github.com/NKChyong/rbpoProject/actions/workflows/ci-sbom-sca.yml)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org)
@@ -204,6 +205,33 @@ git push origin main  # → Запускает полный pipeline с депл
 ```
 
 **Подробности:** См. [docs/CI_CD_SETUP.md](docs/CI_CD_SETUP.md)
+
+---
+
+## 🛡️ SBOM & SCA (P09)
+
+- Workflow [`Security - SBOM & SCA`](.github/workflows/ci-sbom-sca.yml) запускается на `push`/`pull_request`
+  и вручную через `workflow_dispatch`. Он фиксирует версию инструментов
+  (Syft `anchore/syft:v1.38.0`, Grype `anchore/grype:v0.104.1`) для
+  воспроизводимости.
+- Результаты попадают в `EVIDENCE/P09/`:
+  `sbom.json`, `sca_report.json`, `sca_summary.md`, `job_metadata.json`.
+  Директория автоматически архивируется как артефакт
+  `P09_EVIDENCE-<commit>` и приложена к job summary.
+- Политика triage и waivers описана в
+  [`project/69_sbom-vuln-mgmt.md`](project/69_sbom-vuln-mgmt.md) +
+  файл [`policy/waivers.yml`](policy/waivers.yml). Первый waiver закрывает
+  известную ReDoS-уязвимость `nth-check@1.0.2` (CVE-2021-3803), которая
+  появляется в цепочке CRA → svgo и не попадает в production-бандл.
+- Локально ту же процедуру можно повторить (при наличии Docker):
+
+  ```bash
+  mkdir -p EVIDENCE/P09
+  docker run --rm -v $PWD:/work -w /work anchore/syft:v1.38.0 \
+    packages dir:. -o cyclonedx-json > EVIDENCE/P09/sbom.json
+  docker run --rm -v $PWD:/work -w /work anchore/grype:v0.104.1 \
+    sbom:/work/EVIDENCE/P09/sbom.json -o json > EVIDENCE/P09/sca_report.json
+  ```
 
 ---
 
