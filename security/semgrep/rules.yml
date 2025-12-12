@@ -18,11 +18,7 @@ rules:
     severity: WARNING
     patterns:
       - pattern: |
-          CORSMiddleware(
-              ...
-              allow_origins=["*"],
-              ...
-          )
+          CORSMiddleware(..., allow_origins=["*"], ...)
     metadata:
       category: security
       cwe: "CWE-284: Improper Access Control"
