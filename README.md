@@ -235,6 +235,15 @@ git push origin main  # → Запускает полный pipeline с депл
 
 ---
 
+## 🔒 SAST & Secrets (P10)
+
+- Workflow `Security - SAST & Secrets` (`.github/workflows/ci-sast-secrets.yml`) запускается на изменения кода и конфигов Semgrep/Gitleaks.
+- Инструменты: Semgrep (`p/ci` + `security/semgrep/rules.yml`, SARIF) и Gitleaks (`security/.gitleaks.toml`, JSON).
+- Артефакты: `EVIDENCE/P10/semgrep.sarif`, `EVIDENCE/P10/gitleaks.json` (artifact `P10_EVIDENCE`).
+- Краткую сводку и триаж фиксируем в `EVIDENCE/P10/sast_summary.md` и в описании PR.
+
+---
+
 ## 👥 Автор
 
 Проект разработан для курса "Разработка Безопасного ПО" (HSE SecDev 2025)

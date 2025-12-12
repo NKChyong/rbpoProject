@@ -1,0 +1,17 @@
+title = "course default gitleaks config"
+
+[extend]
+# Use built-in ruleset defaults
+
+[allowlist]
+description = "ignore non-sensitive patterns and artifacts (FPs)"
+paths = [
+  "EVIDENCE/", # reports and generated artifacts
+  "docs/",     # documentation examples
+]
+regexes = [
+  '''TEST_SECRET_DO_NOT_USE''',          # placeholder secrets from docs/examples
+  '''ghp_example_token_placeholder''',   # fake GitHub token used in training materials
+]
+commits = []
+
