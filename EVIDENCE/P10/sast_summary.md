@@ -1,18 +1,18 @@
-# P10 – SAST & Secrets Summary (fill after CI run)
+# P10 – SAST & Secrets Summary
 
-- Commit: <commit>
-- Workflow run: <link to Security - SAST & Secrets job>
+- Commit: b4e8941
+- Workflow run: https://github.com/NKChyong/rbpoProject/actions/runs/20152359078
 
 ## Semgrep
 - Configs: p/ci + security/semgrep/rules.yml
-- Findings (by severity): <update after run>
-- Actions: <fixed / created issue link / backlog reason>
+- Findings (by severity): 0
+- Actions: 0 — действий не требуется; кастомные правила актуальны
 
 ## Gitleaks
 - Config: security/.gitleaks.toml
-- Findings: <update after run>
-- Actions: <removed secret / added allowlist with reason / backlog>
+- Findings: 0
+- Actions: 0 — действий не требуется; FP не обнаружены
 
 ## Next steps
-- <how results will be used in DS/final report>
+- Результаты P10 задокументированы в PR; при появлении находок — фикс сразу или issue с ссылкой на SARIF/JSON
 
