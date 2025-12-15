@@ -104,32 +104,32 @@ jobs:
       - name: Summarize ZAP alerts
         run: |
           python - <<'PY'
-import json
-from pathlib import Path
+            import json
+            from pathlib import Path
 
-evidence_dir = Path("${{ env.EVIDENCE_DIR }}")
-report_path = evidence_dir / "zap_baseline.json"
-if not report_path.exists():
-    raise SystemExit("ZAP JSON report not found")
+            evidence_dir = Path("${{ env.EVIDENCE_DIR }}")
+            report_path = evidence_dir / "zap_baseline.json"
+            if not report_path.exists():
+                raise SystemExit("ZAP JSON report not found")
 
-data = json.loads(report_path.read_text())
-severity_order = ["High", "Medium", "Low", "Informational"]
-counts = {lvl: 0 for lvl in severity_order}
+            data = json.loads(report_path.read_text())
+            severity_order = ["High", "Medium", "Low", "Informational"]
+            counts = {lvl: 0 for lvl in severity_order}
 
-for site in data.get("site", []):
-    for alert in site.get("alerts", []):
-        risk = alert.get("riskdesc", "Informational").split(" ")[0]
-        counts.setdefault(risk, 0)
-        counts[risk] += 1
+            for site in data.get("site", []):
+                for alert in site.get("alerts", []):
+                    risk = alert.get("riskdesc", "Informational").split(" ")[0]
+                    counts.setdefault(risk, 0)
+                    counts[risk] += 1
 
-summary_lines = [f"{level}: {counts.get(level, 0)}" for level in severity_order]
-summary_text = "\n".join(summary_lines)
-(evidence_dir / "zap_summary.txt").write_text(summary_text, encoding="utf-8")
+            summary_lines = [f"{level}: {counts.get(level, 0)}" for level in severity_order]
+            summary_text = "\n".join(summary_lines)
+            (evidence_dir / "zap_summary.txt").write_text(summary_text, encoding="utf-8")
 
-with open(Path("${{ github.step_summary }}"), "a", encoding="utf-8") as summary:
-    summary.write("### ZAP baseline alert summary\\n")
-    summary.write(summary_text + "\\n")
-PY
+            with open(Path("${{ github.step_summary }}"), "a", encoding="utf-8") as summary:
+                summary.write("### ZAP baseline alert summary\\n")
+                summary.write(summary_text + "\\n")
+          PY
 
       - name: Upload P11 evidence
         if: always()
