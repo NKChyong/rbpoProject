@@ -22,3 +22,7 @@ docker run --rm \
 COMPOSE_PROJECT_NAME=p11local docker compose down -v
 ```
 
+## Примечание
+
+- 2025-12-15: Последний отчёт получен из ветки `p11-dast-zap`, summary лежит в `zap_summary.txt`.
+
