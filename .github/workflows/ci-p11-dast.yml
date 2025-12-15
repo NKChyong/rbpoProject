@@ -1,0 +1,150 @@
+name: P11 - DAST (OWASP ZAP baseline)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - p11-dast-*
+    paths:
+      - "app/**"
+      - "alembic/**"
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - "entrypoint.sh"
+      - "requirements*.txt"
+      - ".github/workflows/ci-p11-dast.yml"
+      - "EVIDENCE/P11/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "app/**"
+      - "alembic/**"
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - "entrypoint.sh"
+      - "requirements*.txt"
+      - ".github/workflows/ci-p11-dast.yml"
+      - "EVIDENCE/P11/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-p11-dast-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  COMPOSE_PROJECT_NAME: p11dast
+  APP_PORT: "8000"
+  APP_HEALTH_URL: "http://localhost:8000/health"
+  ZAP_TARGET_URL: "http://backend:8000"
+  EVIDENCE_DIR: EVIDENCE/P11
+  ZAP_TIMEOUT: "300"
+
+jobs:
+  dast:
+    name: OWASP ZAP baseline scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure evidence directory
+        run: mkdir -p "${{ env.EVIDENCE_DIR }}"
+
+      - name: Pull base images (best effort)
+        run: |
+          set -e
+          docker compose -f docker-compose.yml pull db backend || true
+
+      - name: Start backend stack (db + api)
+        run: docker compose -f docker-compose.yml up -d db backend
+
+      - name: Wait for backend health
+        env:
+          HEALTH_URL: ${{ env.APP_HEALTH_URL }}
+        run: |
+          set -euo pipefail
+          echo "Waiting for backend health at ${HEALTH_URL}"
+          for attempt in $(seq 1 60); do
+            if curl -sf "${HEALTH_URL}" >/dev/null; then
+              echo "✅ Backend is healthy"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "❌ Backend failed health checks" >&2
+          docker compose -f docker-compose.yml logs backend
+          exit 1
+
+      - name: Run OWASP ZAP baseline
+        env:
+          TARGET_URL: ${{ env.ZAP_TARGET_URL }}
+        run: |
+          set -euo pipefail
+          DOCKER_NETWORK="${COMPOSE_PROJECT_NAME}_readinglist-network"
+          echo "Using docker network: ${DOCKER_NETWORK}"
+          ZAP_CONFIG="-config api.key= -config connection.timeoutInSeconds=${{ env.ZAP_TIMEOUT }} -config globalexcludeurl.url_list(0).regex=.*health.*"
+          docker run --rm \
+            --network "${DOCKER_NETWORK}" \
+            -v "$PWD/${{ env.EVIDENCE_DIR }}":/zap/wrk \
+            zaproxy/zap-stable \
+            zap-baseline.py \
+              -t "${TARGET_URL}" \
+              -r zap_baseline.html \
+              -J zap_baseline.json \
+              -d \
+              -m 4 \
+              -T "${{ env.ZAP_TIMEOUT }}" \
+              -z "${ZAP_CONFIG}" \
+            || true
+
+      - name: Summarize ZAP alerts
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          evidence_dir = Path("${{ env.EVIDENCE_DIR }}")
+          report_path = evidence_dir / "zap_baseline.json"
+          if not report_path.exists():
+              raise SystemExit("ZAP JSON report not found")
+
+          data = json.loads(report_path.read_text())
+          severity_order = ["High", "Medium", "Low", "Informational"]
+          counts = {lvl: 0 for lvl in severity_order}
+
+          for site in data.get("site", []):
+              for alert in site.get("alerts", []):
+                  risk = alert.get("riskdesc", "Informational").split(" ")[0]
+                  counts.setdefault(risk, 0)
+                  counts[risk] += 1
+
+          summary_lines = [f"{level}: {counts.get(level, 0)}" for level in severity_order]
+          summary_text = "\n".join(summary_lines)
+          (evidence_dir / "zap_summary.txt").write_text(summary_text, encoding="utf-8")
+
+          with open(Path("${{ github.step_summary }}"), "a", encoding="utf-8") as summary:
+              summary.write("### ZAP baseline alert summary\n")
+              summary.write(summary_text + "\n")
+          PY
+
+      - name: Upload P11 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P11_EVIDENCE
+          path: ${{ env.EVIDENCE_DIR }}
+          retention-days: 14
+
+      - name: Dump backend logs (on failure)
+        if: failure()
+        run: docker compose -f docker-compose.yml logs backend
+
+      - name: Stop stack
+        if: always()
+        run: docker compose -f docker-compose.yml down -v --remove-orphans
+
