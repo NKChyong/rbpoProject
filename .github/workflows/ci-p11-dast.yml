@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - p11-dast-*
     paths:
       - "app/**"
       - "alembic/**"
