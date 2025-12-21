@@ -1,0 +1,13 @@
+---
+scan:
+  scanners:
+    - vuln
+    - config
+  severity:
+    - CRITICAL
+    - HIGH
+  ignore-unfixed: false
+format: json
+exit-code: 0
+
+

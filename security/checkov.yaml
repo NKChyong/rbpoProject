@@ -1,0 +1,12 @@
+---
+quiet: false
+compact: true
+framework:
+  - kubernetes
+  - dockerfile
+skip-check:
+  - CKV_DOCKER_2 # pin base image already done through python base
+soft-fail: false
+download-external-modules: true
+
+

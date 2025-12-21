@@ -1,0 +1,22 @@
+{
+  "generated_at": "2025-12-21T15:40:40Z",
+  "generator": "local dockerized scanners (per P12 snippets)",
+  "reports": {
+    "hadolint": {
+      "path": "EVIDENCE/P12/hadolint_report.json",
+      "config": "security/hadolint.yaml"
+    },
+    "checkov": {
+      "path": "EVIDENCE/P12/checkov_report.json",
+      "config": "security/checkov.yaml",
+      "iac_root": "iac/"
+    },
+    "trivy": {
+      "path": "EVIDENCE/P12/trivy_report.json",
+      "image_tag": "readinglist:local",
+      "config": "security/trivy.yaml"
+    }
+  }
+}
+
+

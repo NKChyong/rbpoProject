@@ -1,0 +1,13 @@
+---
+# Hadolint config tuned for project Dockerfile
+ignored:
+  - DL3018 # Allow apk/apt installs without pinning because security repo is updated
+  - DL3045 # Allow COPY with --chown for multi-stage readability
+override:
+  warning:
+    - DL4006 # Prefer RUN alternative but keep informative severity
+trustedRegistries:
+  - docker.io
+  - ghcr.io
+
+

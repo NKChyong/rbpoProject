@@ -33,3 +33,6 @@ frontend/coverage/
 
 # Testing
 frontend/.nyc_output
+
+# Local security tooling
+.trivy-cache/

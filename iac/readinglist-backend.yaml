@@ -1,0 +1,172 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: readinglist
+  labels:
+    app: readinglist
+
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: readinglist-secrets
+  namespace: readinglist
+stringData:
+  DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/readinglist
+  JWT_SECRET: change-me
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: readinglist-config
+  namespace: readinglist
+data:
+  APP_ENV: production
+  ALLOWED_ORIGINS: '["https://readinglist.example.com"]'
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: readinglist-api
+  namespace: readinglist
+  labels:
+    app: readinglist
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: readinglist
+      tier: api
+  template:
+    metadata:
+      labels:
+        app: readinglist
+        tier: api
+    spec:
+      serviceAccountName: default
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10000
+        fsGroup: 10000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: backend
+          image: ghcr.io/example/readinglist@sha256:1111111111111111111111111111111111111111111111111111111111111111
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: readinglist-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: readinglist-secrets
+                  key: DATABASE_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: readinglist-secrets
+                  key: JWT_SECRET
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmpfs
+              mountPath: /tmp
+      volumes:
+        - name: tmpfs
+          emptyDir:
+            medium: Memory
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: readinglist-api
+  namespace: readinglist
+  labels:
+    app: readinglist
+spec:
+  selector:
+    app: readinglist
+    tier: api
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: readinglist-api-deny-all
+  namespace: readinglist
+spec:
+  podSelector:
+    matchLabels:
+      app: readinglist
+      tier: api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: readinglist
+              component: ingress
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: readinglist
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: readinglist
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 443
+
+
