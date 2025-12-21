@@ -6,6 +6,7 @@ REST API для управления списком материалов к пр
 
 [![CI/CD Pipeline](https://github.com/NKChyong/rbpoProject/actions/workflows/ci.yml/badge.svg)](https://github.com/NKChyong/rbpoProject/actions/workflows/ci.yml)
 [![Security - SBOM & SCA](https://github.com/NKChyong/rbpoProject/actions/workflows/ci-sbom-sca.yml/badge.svg)](https://github.com/NKChyong/rbpoProject/actions/workflows/ci-sbom-sca.yml)
+[![Security - IaC & Container (P12)](https://github.com/NKChyong/rbpoProject/actions/workflows/ci-p12-iac-container.yml/badge.svg)](https://github.com/NKChyong/rbpoProject/actions/workflows/ci-p12-iac-container.yml)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org)
@@ -243,6 +244,16 @@ git push origin main  # → Запускает полный pipeline с депл
 - Краткую сводку и триаж фиксируем в `EVIDENCE/P10/sast_summary.md` и в описании PR.
 
 ---
+
+## ☑️ IaC & Container Security (P12)
+
+- Отдельный workflow [`Security - IaC & Container (P12)`](.github/workflows/ci-p12-iac-container.yml) триггерится на изменения `Dockerfile`, `iac/**`, `security/**` и вручную (`workflow_dispatch`). Concurrency предотвращает одновременные запуски.
+- Структура `security/` дополнена конфигами `hadolint.yaml`, `checkov.yaml`, `trivy.yaml`, а каталог `iac/` содержит Kubernetes-манифест `readinglist-backend.yaml` с NetworkPolicy и ограничениями привилегий.
+- Pipeline шаги:
+  1. **Hadolint** — dockerized запуск с конфигом, отчёт сохраняется в `EVIDENCE/P12/hadolint_report.json`.
+  2. **Checkov** — скан `iac/` с `--skip-download`, результат `EVIDENCE/P12/checkov_report.json`. Найдены замечания по секретам → задокументированы в `hardening_summary.md`.
+  3. **Trivy** — проверка образа `readinglist:local`, вывод `EVIDENCE/P12/trivy_report.json`.
+- Все файлы накапливаются и отдаются артефактом `P12_EVIDENCE`. Краткие выводы и планы действий фиксируются в `EVIDENCE/P12/hardening_summary.md` и разделе PR Template `P12 - IaC & Container Security`.
 
 ## 👥 Автор
 

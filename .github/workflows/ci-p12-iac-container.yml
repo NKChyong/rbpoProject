@@ -1,0 +1,95 @@
+name: Security - IaC & Container (P12)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, p12]
+    paths:
+      - Dockerfile
+      - docker-compose.yml
+      - iac/**
+      - security/**
+      - EVIDENCE/P12/**
+      - .github/workflows/ci-p12-iac-container.yml
+  pull_request:
+    paths:
+      - Dockerfile
+      - docker-compose.yml
+      - iac/**
+      - security/**
+      - EVIDENCE/P12/**
+      - .github/workflows/ci-p12-iac-container.yml
+
+concurrency:
+  group: p12-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  EVIDENCE_DIR: EVIDENCE/P12
+  IAC_DIR: iac
+  DOCKERFILE_PATH: Dockerfile
+  P12_IMAGE: readinglist:p12-${{ github.sha }}
+
+jobs:
+  security:
+    name: P12 IaC & Container Security
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare evidence directory
+        run: mkdir -p "${{ env.EVIDENCE_DIR }}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build application image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ env.DOCKERFILE_PATH }}
+          push: false
+          load: true
+          tags: ${{ env.P12_IMAGE }}
+
+      - name: Run Hadolint
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/work" hadolint/hadolint \
+            hadolint -f json -c /work/security/hadolint.yaml /work/${{ env.DOCKERFILE_PATH }} \
+            | tee "${{ env.EVIDENCE_DIR }}/hadolint_report.json"
+
+      - name: Run Checkov
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/work" bridgecrew/checkov \
+            -d /work/${{ env.IAC_DIR }} \
+            -o json \
+            --compact \
+            --skip-download \
+            --soft-fail \
+            --config-file /work/security/checkov.yaml \
+            | tee "${{ env.EVIDENCE_DIR }}/checkov_report.json"
+
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.P12_IMAGE }}
+          format: json
+          output: ${{ env.EVIDENCE_DIR }}/trivy_report.json
+          severity: CRITICAL,HIGH
+          trivy-config: security/trivy.yaml
+
+      - name: Upload P12 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P12_EVIDENCE
+          path: ${{ env.EVIDENCE_DIR }}
+          if-no-files-found: error
+
+
