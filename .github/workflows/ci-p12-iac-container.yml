@@ -3,7 +3,7 @@ name: Security - IaC & Container (P12)
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, p12]
     paths:
       - Dockerfile
       - docker-compose.yml
